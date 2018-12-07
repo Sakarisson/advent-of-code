@@ -1,9 +1,9 @@
 import os
 import sequtils
-import strutils
+import strutils, strscans
 
 var
-  input = open(os.getAppDir() & "/testInput.txt")
+  input = open(os.getAppDir() & "/input.txt")
   stringInput = newSeq[string](0)
 
 for line in input.lines:
@@ -15,53 +15,42 @@ type
 
 type
   Claim* = object
-    id*: int
-    topLeft*, bottomRight*: Coordinate
+    id*, width*, height*: int
+    topLeft*: Coordinate
 
 proc formatClaim(rawData: string): Claim =
-  var exploded = rawData.split(' ')
   var
-    rawId = exploded[0]
-    id = parseInt(rawId[1 .. rawId.len - 1])
-    rawTopLeft = exploded[2]
-    topLeftX = parseInt(rawTopLeft.split(',')[0])
-    rawTopLeftY = rawTopLeft.split(',')[1]
-    topLeftY = parseInt(rawTopLeftY[0 .. rawTopLeftY.len - 2])
-    topLeft = Coordinate(x: topLeftX, y: topLeftY)
-    translation = exploded[3].split('x')
-    translateX = parseInt(translation[0])
-    translateY = parseInt(translation[1])
-    bottomRightX = topLeftX + translateX - 1
-    bottomRightY = topLeftY + translateY - 1
-    bottomRight = Coordinate(x: bottomRightX, y: bottomRightY)
+    id, x, y, w, h: int
+
+  discard scanf(rawData, "#$i @ $i,$i: $ix$i", id, x, y, w, h)
 
   Claim(
     id: id,
-    topLeft: topLeft,
-    bottomRight: bottomRight
+    topLeft: Coordinate(x: x, y: y),
+    width: w,
+    height: h
   )
 
-proc doOverlap(a: Claim, b: Claim) : bool =
-  if a.topLeft.x >= b.bottomRight.x or a.topLeft.x >= b.bottomRight.x:
-    return false
-  if a.topLeft.y <= b.bottomRight.y or a.topLeft.y <= b.bottomRight.y:
-    return false
-  return true
-
-var formatted = map(stringInput, formatClaim)
+const gridSize = 1000
+var
+  formatted = map(stringInput, formatClaim)
+  grid: array[gridSize, array[gridSize, int]]
+  counter = 0
 
 for claim in formatted:
-  echo claim
+  var
+    x = claim.topLeft.x
+    y = claim.topLeft.y
+    w = claim.width
+    h = claim.height
 
-echo doOverlap(formatted[0], formatted[2])
-
-# import sequtils
-
-# proc multiply(x: int) : int =
-#   x * 2
-
-# var arr = [1, 2, 3, 4]
-# var multiplied = map(arr, multiply)
-
-# echo arr
-# echo multiplied
+  for i in x ..< x + w:
+    for j in y ..< y + h:
+      inc grid[i][j]
+  
+for i in 0 ..< gridSize:
+  for j in 0 ..< gridSize:
+    if grid[i][j] >= 2:
+      inc counter
+  
+echo counter
